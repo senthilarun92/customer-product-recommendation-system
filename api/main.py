@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from sqlalchemy import text
@@ -56,6 +56,12 @@ def home():
 @app.get("/customer/{customer_id}")
 def get_customer_profile(customer_id: int):
 
+    if customer_id <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Customer ID must be a positive number."
+        )
+
     query = """
     SELECT
         customer_id,
@@ -77,37 +83,26 @@ def get_customer_profile(customer_id: int):
 
             row = result.mappings().first()
 
-
         if not row:
-
             raise HTTPException(
                 status_code=404,
-                detail="Customer not found."
+                detail=f"Customer {customer_id} not found."
             )
 
-
         return {
-
             "customer_id": int(row["customer_id"]),
-
             "name": str(row["name"]),
-
             "age": int(row["age"]),
-
             "city": str(row["city"])
         }
 
-
     except HTTPException:
-
         raise
 
-
-    except Exception as e:
-
+    except Exception:
         raise HTTPException(
             status_code=500,
-            detail=str(e)
+            detail="Unable to retrieve customer information."
         )
 
 
@@ -118,73 +113,96 @@ def get_customer_profile(customer_id: int):
 @app.get("/recommend/{customer_id}")
 def get_recommendations(
     customer_id: int,
-    top_n: int = 5
+    top_n: int = Query(
+        default=5,
+        ge=1,
+        le=10,
+        description="Number of recommendations to return (1-10)"
+    )
 ):
 
-    matrix = create_customer_product_matrix()
-
-    similarity_df = calculate_customer_similarity(
-        matrix
-    )
-
-    recommendations = recommend_products(
-        customer_id,
-        matrix,
-        similarity_df,
-        top_n
-    )
-
-
-    if recommendations.empty:
-
+    if customer_id <= 0:
         raise HTTPException(
-            status_code=404,
-            detail="Customer not found or no recommendations available."
+            status_code=400,
+            detail="Customer ID must be a positive number."
         )
 
+    try:
 
-    product_details = get_product_details(
-        recommendations.index
-    )
+        matrix = create_customer_product_matrix()
 
-
-    result = []
-
-
-    for product_id, score in recommendations.items():
-
-        product = product_details.loc[product_id]
-
-
-        result.append({
-
-            "product_id": int(product_id),
-
-            "product_name": str(
-                product["product_name"]
-            ),
-
-            "category": str(
-                product["category"]
-            ),
-
-            "price": float(
-                product["price"]
-            ),
-
-            "recommendation_score": round(
-                float(score),
-                4
+        if customer_id not in matrix.index:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Customer {customer_id} not found."
             )
-        })
 
+        similarity_df = calculate_customer_similarity(
+            matrix
+        )
 
-    return {
+        recommendations = recommend_products(
+            customer_id,
+            matrix,
+            similarity_df,
+            top_n
+        )
 
-        "customer_id": customer_id,
+        if recommendations.empty:
+            raise HTTPException(
+                status_code=404,
+                detail="No recommendations available for this customer."
+            )
 
-        "recommendations": result
-    }
+        product_details = get_product_details(
+            recommendations.index
+        )
+
+        result = []
+
+        for product_id, score in recommendations.items():
+
+            if product_id not in product_details.index:
+                continue
+
+            product = product_details.loc[product_id]
+
+            result.append({
+                "product_id": int(product_id),
+                "product_name": str(
+                    product["product_name"]
+                ),
+                "category": str(
+                    product["category"]
+                ),
+                "price": float(
+                    product["price"]
+                ),
+                "recommendation_score": round(
+                    float(score),
+                    4
+                )
+            })
+
+        if not result:
+            raise HTTPException(
+                status_code=404,
+                detail="No valid recommendations found."
+            )
+
+        return {
+            "customer_id": customer_id,
+            "recommendations": result
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to generate recommendations."
+        )
 
 
 # =========================================================
@@ -193,6 +211,12 @@ def get_recommendations(
 
 @app.get("/customer/{customer_id}/history")
 def get_customer_history(customer_id: int):
+
+    if customer_id <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Customer ID must be a positive number."
+        )
 
     query = """
     SELECT
@@ -210,7 +234,6 @@ def get_customer_history(customer_id: int):
     ORDER BY pu.purchase_date;
     """
 
-
     try:
 
         with engine.connect() as connection:
@@ -222,70 +245,52 @@ def get_customer_history(customer_id: int):
 
             rows = result.mappings().all()
 
-
         if not rows:
-
             raise HTTPException(
                 status_code=404,
-                detail="Customer purchase history not found."
+                detail=f"No purchase history found for customer {customer_id}."
             )
 
-
         history = []
-
 
         for row in rows:
 
             history.append({
-
                 "product_id": int(
                     row["product_id"]
                 ),
-
                 "product_name": str(
                     row["product_name"]
                 ),
-
                 "category": str(
                     row["category"]
                 ),
-
                 "price": float(
                     row["price"]
                 ),
-
                 "rating": float(
                     row["rating"]
                 ),
-
                 "purchase_date": str(
                     row["purchase_date"]
                 ),
-
                 "quantity": int(
                     row["quantity"]
                 )
             })
 
-
         return {
-
             "customer_id": customer_id,
-
             "purchase_history": history
         }
 
-
     except HTTPException:
-
         raise
 
-
-    except Exception as e:
-
+    except Exception:
         raise HTTPException(
             status_code=500,
-            detail=str(e)
+            detail="Unable to retrieve purchase history."
         )
 
 
@@ -303,18 +308,15 @@ def get_dashboard_stats():
         FROM customers;
         """
 
-
         product_query = """
         SELECT COUNT(*) AS total_products
         FROM products;
         """
 
-
         purchase_query = """
         SELECT COUNT(*) AS total_purchases
         FROM purchases;
         """
-
 
         with engine.connect() as connection:
 
@@ -330,7 +332,6 @@ def get_dashboard_stats():
                 text(purchase_query)
             )
 
-
             total_customers = (
                 customer_result.scalar() or 0
             )
@@ -343,28 +344,22 @@ def get_dashboard_stats():
                 purchase_result.scalar() or 0
             )
 
-
         return {
-
             "total_customers": int(
                 total_customers
             ),
-
             "total_products": int(
                 total_products
             ),
-
             "total_purchases": int(
                 total_purchases
             )
         }
 
-
-    except Exception as e:
-
+    except Exception:
         raise HTTPException(
             status_code=500,
-            detail=str(e)
+            detail="Unable to load dashboard statistics."
         )
 
 
@@ -393,7 +388,6 @@ def get_most_purchased_products():
     LIMIT 5;
     """
 
-
     try:
 
         with engine.connect() as connection:
@@ -404,43 +398,33 @@ def get_most_purchased_products():
 
             rows = result.mappings().all()
 
-
         products = []
-
 
         for row in rows:
 
             products.append({
-
                 "product_id": int(
                     row["product_id"]
                 ),
-
                 "product_name": str(
                     row["product_name"]
                 ),
-
                 "category": str(
                     row["category"]
                 ),
-
                 "total_quantity": int(
                     row["total_quantity"]
                 )
             })
 
-
         return {
-
             "most_purchased_products": products
         }
 
-
-    except Exception as e:
-
+    except Exception:
         raise HTTPException(
             status_code=500,
-            detail=str(e)
+            detail="Unable to load most purchased products."
         )
 
 
@@ -462,7 +446,6 @@ def get_category_purchases():
     ORDER BY total_quantity DESC;
     """
 
-
     try:
 
         with engine.connect() as connection:
@@ -473,35 +456,27 @@ def get_category_purchases():
 
             rows = result.mappings().all()
 
-
         categories = []
-
 
         for row in rows:
 
             categories.append({
-
                 "category": str(
                     row["category"]
                 ),
-
                 "total_quantity": int(
                     row["total_quantity"]
                 )
             })
 
-
         return {
-
             "category_purchases": categories
         }
 
-
-    except Exception as e:
-
+    except Exception:
         raise HTTPException(
             status_code=500,
-            detail=str(e)
+            detail="Unable to load category purchase data."
         )
 
 
@@ -527,7 +502,6 @@ def get_customer_activity():
         total_purchases DESC;
     """
 
-
     try:
 
         with engine.connect() as connection:
@@ -538,39 +512,30 @@ def get_customer_activity():
 
             rows = result.mappings().all()
 
-
         customers = []
-
 
         for row in rows:
 
             customers.append({
-
                 "customer_id": int(
                     row["customer_id"]
                 ),
-
                 "name": str(
                     row["name"]
                 ),
-
                 "total_purchases": int(
                     row["total_purchases"]
                 )
             })
 
-
         return {
-
             "customer_activity": customers
         }
 
-
-    except Exception as e:
-
+    except Exception:
         raise HTTPException(
             status_code=500,
-            detail=str(e)
+            detail="Unable to load customer activity."
         )
 
 
@@ -589,9 +554,7 @@ def get_top_recommendations():
             matrix
         )
 
-
         recommendation_scores = {}
-
 
         for customer_id in matrix.index:
 
@@ -602,20 +565,16 @@ def get_top_recommendations():
                 top_n=5
             )
 
-
             for product_id, score in recommendations.items():
 
                 if product_id not in recommendation_scores:
-
                     recommendation_scores[
                         product_id
                     ] = 0.0
 
-
                 recommendation_scores[
                     product_id
                 ] += float(score)
-
 
         sorted_products = sorted(
             recommendation_scores.items(),
@@ -623,58 +582,48 @@ def get_top_recommendations():
             reverse=True
         )[:5]
 
-
         product_ids = [
             product_id
             for product_id, score in sorted_products
         ]
 
-
         product_details = get_product_details(
             product_ids
         )
 
-
         result = []
 
-
         for product_id, score in sorted_products:
+
+            if product_id not in product_details.index:
+                continue
 
             product = product_details.loc[
                 product_id
             ]
 
-
             result.append({
-
                 "product_id": int(
                     product_id
                 ),
-
                 "product_name": str(
                     product["product_name"]
                 ),
-
                 "category": str(
                     product["category"]
                 ),
-
                 "total_recommendation_score": round(
                     score,
                     4
                 )
             })
 
-
         return {
-
             "top_recommended_products": result
         }
 
-
-    except Exception as e:
-
+    except Exception:
         raise HTTPException(
             status_code=500,
-            detail=str(e)
+            detail="Unable to load top recommended products."
         )
