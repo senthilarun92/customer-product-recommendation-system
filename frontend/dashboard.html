@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Recommendation Analytics Dashboard</title>
+
+    <link
+        rel="stylesheet"
+        href="dashboard.css"
+    >
+
+</head>
+
+
+<body>
+
+
+<!-- =========================================================
+     HEADER
+========================================================= -->
+
+<header class="header">
+
+    <div class="logo">
+        🛍️ Recommendation AI
+    </div>
+
+
+    <div class="header-actions">
+
+        <a
+            href="index.html"
+            class="dashboard-link"
+        >
+            🏠 Customer
+        </a>
+
+
+        <button
+            class="refresh-button"
+            onclick="loadDashboard()"
+            title="Refresh Dashboard"
+        >
+            🔄 Refresh
+        </button>
+
+
+        <div class="status">
+
+            <span class="status-dot"></span>
+
+            API Connected
+
+        </div>
+
+    </div>
+
+</header>
+
+
+
+<!-- =========================================================
+     MAIN
+========================================================= -->
+
+<main class="container">
+
+
+    <!-- =====================================================
+         HERO
+    ====================================================== -->
+
+    <section class="hero">
+
+        <div class="hero-badge">
+            🤖 AI ANALYTICS
+        </div>
+
+
+        <h1>
+            Recommendation
+            <span>Analytics Dashboard</span>
+        </h1>
+
+
+        <p>
+            Analyze customer behavior, product purchases
+            and intelligent recommendation trends.
+        </p>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         STATS
+    ====================================================== -->
+
+    <section class="dashboard-stats">
+
+
+        <!-- Customers -->
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                👥
+            </div>
+
+
+            <div class="stat-content">
+
+                <span>
+                    Total Customers
+                </span>
+
+                <strong id="totalCustomers">
+                    -
+                </strong>
+
+                <small>
+                    Active customer records
+                </small>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- Products -->
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                🛍️
+            </div>
+
+
+            <div class="stat-content">
+
+                <span>
+                    Total Products
+                </span>
+
+                <strong id="totalProducts">
+                    -
+                </strong>
+
+                <small>
+                    Available products
+                </small>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- Purchases -->
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                🧾
+            </div>
+
+
+            <div class="stat-content">
+
+                <span>
+                    Total Purchases
+                </span>
+
+                <strong id="totalPurchases">
+                    -
+                </strong>
+
+                <small>
+                    Recorded transactions
+                </small>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         CHARTS ROW 1
+    ====================================================== -->
+
+    <section class="charts-grid">
+
+
+        <!-- Most Purchased Chart -->
+
+        <div class="chart-card">
+
+            <div class="chart-header">
+
+                <div>
+
+                    <span class="section-label">
+                        PURCHASE ANALYTICS
+                    </span>
+
+                    <h2>
+                        📊 Most Purchased Products
+                    </h2>
+
+                    <p>
+                        Products with the highest purchase quantity.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="chart-container">
+
+                <canvas id="purchaseChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- Category Chart -->
+
+        <div class="chart-card">
+
+            <div class="chart-header">
+
+                <div>
+
+                    <span class="section-label">
+                        CATEGORY ANALYTICS
+                    </span>
+
+                    <h2>
+                        🥧 Category Distribution
+                    </h2>
+
+                    <p>
+                        Purchase distribution across categories.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="chart-container doughnut-container">
+
+                <canvas id="categoryChart"></canvas>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         MOST PURCHASED PRODUCTS
+    ====================================================== -->
+
+    <section class="analytics-card">
+
+        <div class="analytics-card-header">
+
+            <div>
+
+                <span class="section-label">
+                    PRODUCT PERFORMANCE
+                </span>
+
+                <h2>
+                    🔥 Most Purchased Products
+                </h2>
+
+                <p>
+                    Products purchased most frequently by customers.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div
+            id="mostPurchasedProducts"
+            class="analytics-list"
+        >
+
+            <div class="analytics-loading">
+                Loading...
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         CATEGORY ANALYSIS
+    ====================================================== -->
+
+    <section class="analytics-card">
+
+        <div class="analytics-card-header">
+
+            <div>
+
+                <span class="section-label">
+                    CATEGORY ANALYSIS
+                </span>
+
+                <h2>
+                    📊 Category-wise Purchases
+                </h2>
+
+                <p>
+                    Purchase distribution across product categories.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div
+            id="categoryPurchases"
+            class="analytics-list"
+        >
+
+            <div class="analytics-loading">
+                Loading...
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         CUSTOMER ACTIVITY CHART
+    ====================================================== -->
+
+    <section class="chart-card full-chart">
+
+        <div class="chart-header">
+
+            <div>
+
+                <span class="section-label">
+                    CUSTOMER ANALYTICS
+                </span>
+
+                <h2>
+                    👥 Customer Purchase Activity
+                </h2>
+
+                <p>
+                    Compare purchase activity across customers.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="large-chart-container">
+
+            <canvas id="customerChart"></canvas>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         CUSTOMER ACTIVITY LIST
+    ====================================================== -->
+
+    <section class="analytics-card">
+
+        <div class="analytics-card-header">
+
+            <div>
+
+                <span class="section-label">
+                    CUSTOMER INSIGHTS
+                </span>
+
+                <h2>
+                    👥 Customer Activity
+                </h2>
+
+                <p>
+                    Purchase activity of each customer.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div
+            id="customerActivity"
+            class="analytics-list"
+        >
+
+            <div class="analytics-loading">
+                Loading...
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         RECOMMENDATION CHART
+    ====================================================== -->
+
+    <section class="chart-card full-chart">
+
+        <div class="chart-header">
+
+            <div>
+
+                <span class="section-label">
+                    AI RECOMMENDATION ANALYTICS
+                </span>
+
+                <h2>
+                    🤖 Recommendation Score Analysis
+                </h2>
+
+                <p>
+                    Products receiving the highest recommendation scores.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="large-chart-container">
+
+            <canvas id="recommendationChart"></canvas>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         TOP RECOMMENDATIONS
+    ====================================================== -->
+
+    <section class="analytics-card">
+
+        <div class="analytics-card-header">
+
+            <div>
+
+                <span class="section-label">
+                    AI RECOMMENDATION INSIGHTS
+                </span>
+
+                <h2>
+                    🤖 Top Recommended Products
+                </h2>
+
+                <p>
+                    Products receiving the highest recommendation scores.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div
+            id="topRecommendedProducts"
+            class="analytics-list"
+        >
+
+            <div class="analytics-loading">
+                Loading...
+            </div>
+
+        </div>
+
+    </section>
+
+
+</main>
+
+
+
+<!-- =========================================================
+     FOOTER
+========================================================= -->
+
+<footer>
+
+    <p>
+        AI Product Recommendation System © 2026
+    </p>
+
+    <span>
+        Powered by Collaborative Filtering
+    </span>
+
+</footer>
+
+
+
+<!-- =========================================================
+     CHART.JS
+========================================================= -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/chart.js"
+></script>
+
+
+<!-- =========================================================
+     DASHBOARD JAVASCRIPT
+========================================================= -->
+
+<script src="dashboard.js"></script>
+
+
+</body>
+
+</html>

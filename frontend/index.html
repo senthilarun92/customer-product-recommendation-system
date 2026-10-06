@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>AI Product Recommendation System</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+
+<body>
+
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <header class="header">
+
+        <div class="logo">
+            🛍️ Recommendation AI
+        </div>
+
+
+        <div class="header-actions">
+
+            <a
+                href="dashboard.html"
+                class="dashboard-link"
+            >
+                📊 Dashboard
+            </a>
+
+
+            <div class="status">
+
+                <span class="status-dot"></span>
+
+                API Connected
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- =====================================================
+         MAIN CONTENT
+    ====================================================== -->
+
+    <main class="container">
+
+
+        <!-- =================================================
+             HERO SECTION
+        ================================================== -->
+
+        <section class="hero">
+
+            <h1>
+
+                Customer Product
+
+                <span>
+                    Recommendation
+                </span>
+
+            </h1>
+
+
+            <p>
+
+                AI-powered product recommendations
+                based on customer purchase behavior.
+
+            </p>
+
+        </section>
+
+
+
+        <!-- =================================================
+             CUSTOMER SEARCH
+        ================================================== -->
+
+        <section class="search-card">
+
+            <h2>
+                🔍 Find Recommended Products
+            </h2>
+
+
+            <p class="description">
+
+                Enter a customer ID to generate
+                personalized product recommendations.
+
+            </p>
+
+
+            <div class="search-box">
+
+
+                <input
+                    type="number"
+                    id="customerId"
+                    placeholder="Enter Customer ID (Example: 101)"
+                >
+
+
+                <button
+                    onclick="getRecommendations()"
+                >
+
+                    Get Recommendations
+
+                </button>
+
+
+            </div>
+
+
+            <!-- ERROR MESSAGE -->
+
+            <p
+                id="errorMessage"
+                class="error"
+            ></p>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             CUSTOMER PROFILE
+        ================================================== -->
+
+        <section
+            id="customerProfile"
+            class="customer-profile"
+            style="display: none;"
+        >
+
+
+            <div class="profile-header">
+
+                <div>
+
+                    <span class="profile-label">
+                        CUSTOMER PROFILE
+                    </span>
+
+
+                    <h2 id="profileName">
+                        -
+                    </h2>
+
+                </div>
+
+
+                <div class="profile-id">
+
+                    ID:
+
+                    <strong id="profileCustomerId">
+                        -
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="profile-details">
+
+
+                <!-- NAME -->
+
+                <div class="profile-detail-card">
+
+                    <div class="profile-icon">
+                        👤
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Customer Name
+                        </span>
+
+
+                        <strong id="profileNameDetail">
+                            -
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- AGE -->
+
+                <div class="profile-detail-card">
+
+                    <div class="profile-icon">
+                        🎂
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Age
+                        </span>
+
+
+                        <strong id="profileAge">
+                            -
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- CITY -->
+
+                <div class="profile-detail-card">
+
+                    <div class="profile-icon">
+                        📍
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            City
+                        </span>
+
+
+                        <strong id="profileCity">
+                            -
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             CUSTOMER SUMMARY
+        ================================================== -->
+
+        <section
+            id="customerSummary"
+            class="customer-summary"
+            style="display: none;"
+        >
+
+
+            <!-- CUSTOMER -->
+
+            <div class="summary-card">
+
+                <span class="summary-label">
+                    Customer
+                </span>
+
+
+                <strong id="summaryCustomer">
+                    -
+                </strong>
+
+            </div>
+
+
+
+            <!-- RECOMMENDATIONS -->
+
+            <div class="summary-card">
+
+                <span class="summary-label">
+                    Recommendations
+                </span>
+
+
+                <strong id="summaryRecommendations">
+                    -
+                </strong>
+
+            </div>
+
+
+
+            <!-- TOP PRODUCT -->
+
+            <div class="summary-card">
+
+                <span class="summary-label">
+                    Top Recommendation
+                </span>
+
+
+                <strong id="summaryTopProduct">
+                    -
+                </strong>
+
+            </div>
+
+
+
+            <!-- METHOD -->
+
+            <div class="summary-card">
+
+                <span class="summary-label">
+                    Recommendation Method
+                </span>
+
+
+                <strong>
+                    Collaborative Filtering
+                </strong>
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             PURCHASE HISTORY
+        ================================================== -->
+
+        <section
+            id="purchaseHistorySection"
+            class="purchase-history-section"
+            style="display: none;"
+        >
+
+
+            <div class="section-title">
+
+                <div>
+
+                    <h2>
+                        🧾 Purchase History
+                    </h2>
+
+
+                    <p id="purchaseHistoryInfo">
+
+                        Previous purchases by this customer.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            <div
+                id="purchaseHistory"
+                class="purchase-history-grid"
+            >
+
+                <!-- Purchase history cards
+                     will be created by JavaScript -->
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             RECOMMENDATIONS
+        ================================================== -->
+
+        <section
+            id="resultsSection"
+            class="results-section"
+        >
+
+
+            <div class="results-header">
+
+
+                <div>
+
+                    <h2>
+                        🤖 Recommended Products
+                    </h2>
+
+
+                    <p id="customerInfo">
+
+                        Enter a customer ID to see
+                        personalized recommendations.
+
+                    </p>
+
+                </div>
+
+
+            </div>
+
+
+
+            <div
+                id="recommendations"
+                class="products-grid"
+            >
+
+                <!-- Recommendation cards
+                     will be created by JavaScript -->
+
+            </div>
+
+
+        </section>
+
+
+    </main>
+
+
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    <footer>
+
+        <p>
+
+            AI Product Recommendation System
+            © 2026
+
+        </p>
+
+    </footer>
+
+
+
+    <!-- =====================================================
+         JAVASCRIPT
+    ====================================================== -->
+
+    <script src="script.js"></script>
+
+
+</body>
+
+</html>
